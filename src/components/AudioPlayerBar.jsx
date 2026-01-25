@@ -18,6 +18,13 @@ export default function AudioPlayerBar({ audiobook, isPlaying, onPlayPause, onCl
     }
   }, [isPlaying]);
 
+  // Pausar el audio cuando se cierra el reproductor
+  useEffect(() => {
+    return () => {
+      pause();
+    };
+  }, []);
+
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const handleProgressClick = (e) => {
