@@ -123,3 +123,18 @@ The `AudioPlayerBar` component includes:
 - Time indicators: elapsed time (left) and remaining time with minus sign (right)
 - Play/pause controls
 - Real-time updates via `useAudioPlayer` hook
+
+## Deployment
+
+Hosted on **Vercel** with automatic deploys from GitHub `main` branch.
+
+### Environment Variables (Vercel)
+
+Configure in Vercel Dashboard > Settings > Environment Variables:
+
+| Variable | Value |
+|----------|-------|
+| `VITE_SUPABASE_URL` | `https://izzkmsahowfuljybisml.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | (anon key from Supabase) |
+
+These are public keys (exposed in frontend bundle). Security is enforced by Supabase RLS policies.
