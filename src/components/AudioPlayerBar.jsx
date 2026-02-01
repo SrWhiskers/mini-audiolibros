@@ -35,14 +35,20 @@ export default function AudioPlayerBar({ audiobook, isPlaying, onPlayPause, onCl
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
-      <div
-        className="h-1 bg-gray-200 cursor-pointer"
-        onClick={handleProgressClick}
-      >
+      <div className="px-4 pt-2">
+        <div className="flex justify-between text-xs text-gray-500 mb-1">
+          <span>{formatTime(currentTime)}</span>
+          <span>-{formatTime(duration - currentTime)}</span>
+        </div>
         <div
-          className="h-full bg-purple-600 transition-all duration-100"
-          style={{ width: `${progress}%` }}
-        />
+          className="h-1 bg-gray-200 cursor-pointer rounded-full"
+          onClick={handleProgressClick}
+        >
+          <div
+            className="h-full bg-purple-600 rounded-full transition-all duration-100"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-3">
@@ -66,10 +72,6 @@ export default function AudioPlayerBar({ audiobook, isPlaying, onPlayPause, onCl
           </div>
 
           <div className="flex items-center space-x-2 md:space-x-4">
-            <span className="text-xs text-gray-500 hidden sm:block">
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </span>
-
             <button
               onClick={onPlayPause}
               className="w-10 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-colors"

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useAudioDuration, formatDuration } from '../hooks/useAudioDuration';
 
-export default function AudiobookDetail({ audiobook, onClose, onPlay, isPlaying, isActive }) {
+export default function AudiobookDetail({ audiobook, onClose, onPlay, isPlaying, isActive, cachedDuration, onDurationLoaded }) {
   const [imageError, setImageError] = useState(false);
+  const { duration, isLoading } = useAudioDuration(audiobook.audioSrc, cachedDuration, onDurationLoaded);
 
   // Bloquear scroll del body cuando el modal está abierto
   useEffect(() => {
@@ -63,7 +65,7 @@ export default function AudiobookDetail({ audiobook, onClose, onPlay, isPlaying,
               <h2 className="text-2xl font-bold text-gray-900 mb-1">{audiobook.title}</h2>
               <p className="text-lg text-purple-600">{audiobook.author}</p>
             </div>
-            <div className="flex items-center text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+            <div className={`flex items-center text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full ${isLoading ? 'animate-pulse' : ''}`}>
               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -72,7 +74,7 @@ export default function AudiobookDetail({ audiobook, onClose, onPlay, isPlaying,
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              {audiobook.duration}
+              {formatDuration(duration, audiobook.duration)}
             </div>
           </div>
 

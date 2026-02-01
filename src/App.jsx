@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Header from './components/Header';
 import CategoryFilter from './components/CategoryFilter';
 import AudiobookGrid from './components/AudiobookGrid';
@@ -11,6 +11,14 @@ function App() {
   const [currentAudiobook, setCurrentAudiobook] = useState(null);
   const [selectedAudiobook, setSelectedAudiobook] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [durationCache, setDurationCache] = useState({});
+
+  const handleDurationLoaded = useCallback((audioSrc, duration) => {
+    setDurationCache(prev => ({
+      ...prev,
+      [audioSrc]: duration
+    }));
+  }, []);
 
   const categories = audiobooks.categories;
 
@@ -44,6 +52,8 @@ function App() {
           onSelectAudiobook={setSelectedAudiobook}
           currentAudiobookId={currentAudiobook?.id}
           isPlaying={isPlaying}
+          durationCache={durationCache}
+          onDurationLoaded={handleDurationLoaded}
         />
       </main>
 
@@ -66,6 +76,8 @@ function App() {
           onPlay={() => handlePlayAudiobook(selectedAudiobook)}
           isPlaying={isPlaying}
           isActive={currentAudiobook?.id === selectedAudiobook.id}
+          cachedDuration={durationCache[selectedAudiobook.audioSrc]}
+          onDurationLoaded={handleDurationLoaded}
         />
       )}
     </div>

@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useAudioDuration, formatDuration } from '../hooks/useAudioDuration';
 
-export default function AudiobookCard({ audiobook, onPlay, onClick, isCurrentlyPlaying, isActive }) {
+export default function AudiobookCard({ audiobook, onPlay, onClick, isCurrentlyPlaying, isActive, cachedDuration, onDurationLoaded }) {
   const [imageError, setImageError] = useState(false);
+  const { duration, isLoading } = useAudioDuration(audiobook.audioSrc, cachedDuration, onDurationLoaded);
 
   const handlePlayClick = (e) => {
     e.stopPropagation();
@@ -62,7 +64,7 @@ export default function AudiobookCard({ audiobook, onPlay, onClick, isCurrentlyP
         <h3 className="font-semibold text-gray-900 mb-1 line-clamp-1">{audiobook.title}</h3>
         <p className="text-sm text-purple-600 mb-2">{audiobook.author}</p>
         <p className="text-sm text-gray-500 line-clamp-2 mb-3">{audiobook.description}</p>
-        <div className="flex items-center text-xs text-gray-400">
+        <div className={`flex items-center text-xs text-gray-400 ${isLoading ? 'animate-pulse' : ''}`}>
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
@@ -71,7 +73,7 @@ export default function AudiobookCard({ audiobook, onPlay, onClick, isCurrentlyP
               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          {audiobook.duration}
+          {formatDuration(duration, audiobook.duration)}
         </div>
       </div>
     </div>

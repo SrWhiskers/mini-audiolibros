@@ -29,9 +29,10 @@ Mini Audiolibros is a React + Vite webapp for browsing and playing audiobook sum
 
 ### Key Files
 
-- `src/App.jsx` - Main component managing global state (selected category, current audiobook, playing state, detail view)
+- `src/App.jsx` - Main component managing global state (selected category, current audiobook, playing state, detail view, duration cache)
 - `src/data/audiobooks.json` - All audiobook data organized by categories
 - `src/hooks/useAudioPlayer.js` - Custom hook for HTML5 audio control (play, pause, seek, time tracking)
+- `src/hooks/useAudioDuration.js` - Custom hook for fetching real audio duration from MP3 metadata
 
 ### Component Structure
 
@@ -58,7 +59,7 @@ Audiobooks are stored in `src/data/audiobooks.json` with this structure:
       "title": "Titulo",
       "author": "Autor",
       "description": "Descripcion",
-      "duration": "12:30",
+      "duration": "12:30",        // fallback if audio metadata unavailable
       "coverImage": "/covers/imagen.jpg",
       "audioSrc": "/audio/categoria/archivo.mp3"
     }]
@@ -70,3 +71,24 @@ Audiobooks are stored in `src/data/audiobooks.json` with this structure:
 
 - Audio files: `public/audio/{category}/{filename}.mp3`
 - Cover images: `public/covers/{filename}.jpg`
+
+### Audio Duration System
+
+The app fetches real audio duration from MP3 files instead of using hardcoded JSON values:
+
+1. **useAudioDuration hook** - Creates an `Audio()` element with `preload='metadata'` to fetch only file metadata (not the full audio)
+2. **Duration cache** - App.jsx maintains a `durationCache` object keyed by `audioSrc` to avoid repeated metadata requests
+3. **Fallback** - If audio file fails to load, displays the duration from JSON as fallback
+4. **Loading state** - Shows pulse animation while fetching metadata
+
+Flow: `AudiobookCard/AudiobookDetail` -> `useAudioDuration(audioSrc, cachedDuration, onDurationLoaded)` -> callback updates `App.jsx` cache
+
+### Audio Player Features
+
+The `AudioPlayerBar` component includes:
+- Progress bar with click-to-seek functionality
+- Time indicators above progress bar:
+  - Left: elapsed time (e.g., "1:23")
+  - Right: remaining time with minus sign (e.g., "-10:07")
+- Play/pause controls
+- Real-time updates via `useAudioPlayer` hook
