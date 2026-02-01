@@ -18,6 +18,12 @@ Node.js is installed via Homebrew. If npm is not found, add Homebrew to PATH:
 export PATH="/opt/homebrew/bin:$PATH"
 ```
 
+Environment variables (`.env.local`, not committed to git):
+```
+VITE_SUPABASE_URL=https://izzkmsahowfuljybisml.supabase.co
+VITE_SUPABASE_ANON_KEY=<anon-key>
+```
+
 ## Architecture
 
 Mini Audiolibros is a React + Vite webapp for browsing and playing audiobook summaries.
@@ -25,12 +31,13 @@ Mini Audiolibros is a React + Vite webapp for browsing and playing audiobook sum
 ### Tech Stack
 - React 19 with Vite 7
 - Tailwind CSS v4 (via @tailwindcss/vite plugin)
-- Static JSON data (no backend)
+- Supabase (PostgreSQL database + Storage for audio/images)
 
 ### Key Files
 
 - `src/App.jsx` - Main component managing global state (selected category, current audiobook, playing state, detail view, duration cache)
-- `src/data/audiobooks.json` - All audiobook data organized by categories
+- `src/lib/supabase.js` - Supabase client configuration
+- `src/hooks/useAudiobooks.js` - Hook to fetch audiobooks from Supabase
 - `src/hooks/useAudioPlayer.js` - Custom hook for HTML5 audio control (play, pause, seek, time tracking)
 - `src/hooks/useAudioDuration.js` - Custom hook for fetching real audio duration from MP3 metadata
 
@@ -46,49 +53,73 @@ App.jsx
 └── AudioPlayerBar            # Fixed bottom player (appears when audio is active)
 ```
 
-### Data Management
+## Supabase Backend
 
-Audiobooks are stored in `src/data/audiobooks.json` with this structure:
-```json
-{
-  "categories": [{
-    "id": "categoria-id",
-    "name": "Nombre Visible",
-    "audiobooks": [{
-      "id": "libro-id",
-      "title": "Titulo",
-      "author": "Autor",
-      "description": "Descripcion",
-      "duration": "12:30",        // fallback if audio metadata unavailable
-      "coverImage": "/covers/imagen.jpg",
-      "audioSrc": "/audio/categoria/archivo.mp3"
-    }]
-  }]
-}
+Project URL: `https://izzkmsahowfuljybisml.supabase.co`
+
+### Database Tables
+
+**categories**
+| Column | Type | Description |
+|--------|------|-------------|
+| id | TEXT (PK) | Category identifier (e.g., "filosofia") |
+| name | TEXT | Display name |
+| created_at | TIMESTAMP | Auto-generated |
+
+Current categories: `filosofia`, `ciencia`, `literatura`, `psicologia`
+
+**audiobooks**
+| Column | Type | Description |
+|--------|------|-------------|
+| id | TEXT (PK) | Audiobook identifier |
+| title | TEXT | Book title |
+| author | TEXT | Author name |
+| description | TEXT | Book description |
+| duration | TEXT | Fallback duration (e.g., "12:30") |
+| cover_image | TEXT | Full Supabase Storage URL |
+| audio_src | TEXT | Full Supabase Storage URL |
+| category_id | TEXT (FK) | Reference to categories.id |
+| created_at | TIMESTAMP | Auto-generated |
+
+### Storage Buckets
+
+- `audio` - MP3 files (public read)
+- `covers` - Cover images (public read)
+
+URLs follow the pattern:
+```
+https://izzkmsahowfuljybisml.supabase.co/storage/v1/object/public/audio/[filename].mp3
+https://izzkmsahowfuljybisml.supabase.co/storage/v1/object/public/covers/[filename].jpg
 ```
 
-### Static Assets
+### Security (RLS)
 
-- Audio files: `public/audio/{category}/{filename}.mp3`
-- Cover images: `public/covers/{filename}.jpg`
+Row Level Security is enabled:
+- **Read**: Public (anyone can view audiobooks)
+- **Write**: Only authenticated users (admin via Dashboard)
 
-### Audio Duration System
+### Admin Workflow
 
-The app fetches real audio duration from MP3 files instead of using hardcoded JSON values:
+Use Supabase Dashboard directly to manage content:
+1. Go to Storage > upload files to `audio` or `covers` bucket
+2. Copy the public URL
+3. Go to Table Editor > `audiobooks` > insert/edit row with URLs
 
-1. **useAudioDuration hook** - Creates an `Audio()` element with `preload='metadata'` to fetch only file metadata (not the full audio)
-2. **Duration cache** - App.jsx maintains a `durationCache` object keyed by `audioSrc` to avoid repeated metadata requests
-3. **Fallback** - If audio file fails to load, displays the duration from JSON as fallback
+## Audio Features
+
+### Duration System
+
+The app fetches real audio duration from MP3 files:
+
+1. **useAudioDuration hook** - Creates an `Audio()` element with `preload='metadata'` to fetch only file metadata
+2. **Duration cache** - App.jsx maintains a `durationCache` object keyed by `audioSrc` to avoid repeated requests
+3. **Fallback** - If audio file fails to load, displays the duration from database
 4. **Loading state** - Shows pulse animation while fetching metadata
 
-Flow: `AudiobookCard/AudiobookDetail` -> `useAudioDuration(audioSrc, cachedDuration, onDurationLoaded)` -> callback updates `App.jsx` cache
-
-### Audio Player Features
+### Audio Player
 
 The `AudioPlayerBar` component includes:
 - Progress bar with click-to-seek functionality
-- Time indicators above progress bar:
-  - Left: elapsed time (e.g., "1:23")
-  - Right: remaining time with minus sign (e.g., "-10:07")
+- Time indicators: elapsed time (left) and remaining time with minus sign (right)
 - Play/pause controls
 - Real-time updates via `useAudioPlayer` hook

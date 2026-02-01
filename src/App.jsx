@@ -4,7 +4,7 @@ import CategoryFilter from './components/CategoryFilter';
 import AudiobookGrid from './components/AudiobookGrid';
 import AudiobookDetail from './components/AudiobookDetail';
 import AudioPlayerBar from './components/AudioPlayerBar';
-import audiobooks from './data/audiobooks.json';
+import { useAudiobooks } from './hooks/useAudiobooks';
 
 function App() {
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -13,14 +13,14 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [durationCache, setDurationCache] = useState({});
 
+  const { categories, loading, error } = useAudiobooks();
+
   const handleDurationLoaded = useCallback((audioSrc, duration) => {
     setDurationCache(prev => ({
       ...prev,
       [audioSrc]: duration
     }));
   }, []);
-
-  const categories = audiobooks.categories;
 
   const filteredCategories = selectedCategory === 'all'
     ? categories
@@ -34,6 +34,28 @@ function App() {
       setIsPlaying(true);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando audiolibros...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center text-red-600">
+          <p className="text-xl font-semibold mb-2">Error al cargar</p>
+          <p className="text-gray-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
