@@ -23,21 +23,35 @@ export function useAudiobooks() {
 
         if (bookError) throw bookError;
 
-        // Agrupar audiolibros por categoría y mapear campos snake_case a camelCase
+        // Obtener relaciones audiobook-categoría
+        const { data: relations, error: relError } = await supabase
+          .from('audiobook_categories')
+          .select('*');
+
+        if (relError) throw relError;
+
+        // Mapear audiolibros a camelCase
+        const booksMap = {};
+        books.forEach(book => {
+          booksMap[book.id] = {
+            id: book.id,
+            title: book.title,
+            author: book.author,
+            description: book.description,
+            duration: book.duration,
+            coverImage: book.cover_image,
+            audioSrc: book.audio_src
+          };
+        });
+
+        // Agrupar audiolibros por categoría usando la tabla de relaciones
         const categoriesWithBooks = cats.map(cat => ({
           id: cat.id,
           name: cat.name,
-          audiobooks: books
-            .filter(book => book.category_id === cat.id)
-            .map(book => ({
-              id: book.id,
-              title: book.title,
-              author: book.author,
-              description: book.description,
-              duration: book.duration,
-              coverImage: book.cover_image,
-              audioSrc: book.audio_src
-            }))
+          audiobooks: relations
+            .filter(rel => rel.category_id === cat.id)
+            .map(rel => booksMap[rel.audiobook_id])
+            .filter(Boolean)
         }));
 
         setCategories(categoriesWithBooks);

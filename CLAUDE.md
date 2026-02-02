@@ -78,8 +78,16 @@ Current categories: `filosofia`, `ciencia`, `literatura`, `psicologia`
 | duration | TEXT | Fallback duration (e.g., "12:30") |
 | cover_image | TEXT | Full Supabase Storage URL |
 | audio_src | TEXT | Full Supabase Storage URL |
-| category_id | TEXT (FK) | Reference to categories.id |
+| category_id | TEXT | Legacy field (not used, kept for reference) |
 | created_at | TIMESTAMP | Auto-generated |
+
+**audiobook_categories** (many-to-many relation)
+| Column | Type | Description |
+|--------|------|-------------|
+| audiobook_id | TEXT (PK, FK) | Reference to audiobooks.id |
+| category_id | TEXT (PK, FK) | Reference to categories.id |
+
+An audiobook can belong to multiple categories via this join table.
 
 ### Storage Buckets
 
@@ -101,9 +109,17 @@ Row Level Security is enabled:
 ### Admin Workflow
 
 Use Supabase Dashboard directly to manage content:
-1. Go to Storage > upload files to `audio` or `covers` bucket
-2. Copy the public URL
-3. Go to Table Editor > `audiobooks` > insert/edit row with URLs
+
+**Add new audiobook:**
+1. Storage > upload files to `audio` and `covers` buckets
+2. Copy the public URLs
+3. Table Editor > `audiobooks` > insert row with URLs
+4. Table Editor > `audiobook_categories` > insert row(s) to assign categories
+
+**Assign audiobook to multiple categories:**
+1. Table Editor > `audiobook_categories`
+2. Insert one row per category: `(audiobook_id, category_id)`
+3. Example: book "mi-libro" in filosofia and ciencia = 2 rows
 
 ## Audio Features
 
