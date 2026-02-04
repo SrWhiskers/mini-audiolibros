@@ -1,23 +1,25 @@
+import { Link } from 'react-router-dom';
 import { useAudioDuration, formatDuration } from '../hooks/useAudioDuration';
 import { useAudioPlayerContext } from '../hooks/useAudioPlayerContext';
 import { ClockIcon } from './icons';
 import { PlayPauseButton } from './ui';
 import { AudiobookCover } from './audiobook';
 
-export default function AudiobookCard({ audiobook, onSelectAudiobook }) {
+export default function AudiobookCard({ audiobook }) {
   const { currentAudiobook, isPlaying, durationCache, playAudiobook, handleDurationLoaded } = useAudioPlayerContext();
   const isActive = currentAudiobook?.id === audiobook.id;
   const { duration, isLoading } = useAudioDuration(audiobook.audioSrc, durationCache[audiobook.audioSrc], handleDurationLoaded);
 
   const handlePlayClick = (e) => {
+    e.preventDefault();
     e.stopPropagation();
     playAudiobook(audiobook);
   };
 
   return (
-    <div
-      onClick={() => onSelectAudiobook(audiobook)}
-      className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden border-2 cursor-pointer ${
+    <Link
+      to={`/audiobook/${audiobook.id}`}
+      className={`block bg-white rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden border-2 ${
         isActive ? 'border-purple-500' : 'border-transparent'
       }`}
     >
@@ -45,6 +47,6 @@ export default function AudiobookCard({ audiobook, onSelectAudiobook }) {
           {formatDuration(duration, audiobook.duration)}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

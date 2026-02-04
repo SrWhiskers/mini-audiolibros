@@ -1,6 +1,6 @@
 import AudiobookCard from './AudiobookCard';
 
-export default function AudiobookGrid({ categories, onSelectAudiobook }) {
+export default function AudiobookGrid({ categories }) {
   return (
     <div className="space-y-10">
       {categories.map((category) => (
@@ -14,7 +14,6 @@ export default function AudiobookGrid({ categories, onSelectAudiobook }) {
               <AudiobookCard
                 key={audiobook.id}
                 audiobook={audiobook}
-                onSelectAudiobook={onSelectAudiobook}
               />
             ))}
           </div>
