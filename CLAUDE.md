@@ -30,76 +30,114 @@ Mini Audiolibros is a React + Vite webapp for browsing and playing audiobook sum
 
 ### Tech Stack
 - React 19 with Vite 7
+- React Router v7 (client-side routing)
 - Tailwind CSS v4 (via @tailwindcss/vite plugin)
 - Supabase (PostgreSQL database + Storage for audio/images)
+
+### Routing
+
+The app uses React Router for navigation:
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/` | HomePage | Grid of audiobooks with category filter |
+| `/audiobook/:id` | AudiobookDetailPage | Detail view of a single audiobook |
+
+- `AudiobookCard` uses `<Link>` to navigate to detail page
+- Browser back/forward buttons work naturally
+- URLs are shareable (e.g., `/audiobook/meditaciones-marco-aurelio`)
+- `AudioPlayerBar` persists across all routes
 
 ### Project Structure
 
 ```
 src/
-├── App.jsx                    # Main component (category filter, detail modal)
-├── main.jsx                   # React entry point
-├── index.css                  # Global styles
+├── App.jsx                       # Routes + Providers wrapper
+├── main.jsx                      # React entry point with BrowserRouter
+├── index.css                     # Global styles
+├── pages/                        # Route components
+│   ├── HomePage.jsx              # Main grid with categories
+│   └── AudiobookDetailPage.jsx   # Audiobook detail view
 ├── components/
-│   ├── icons/                 # Reusable SVG icon components
-│   │   ├── index.js           # Barrel export
+│   ├── icons/                    # Reusable SVG icon components
+│   │   ├── index.js              # Barrel export
 │   │   ├── BookIcon.jsx
 │   │   ├── PlayIcon.jsx
 │   │   ├── PauseIcon.jsx
 │   │   ├── CloseIcon.jsx
 │   │   └── ClockIcon.jsx
-│   ├── ui/                    # Generic UI components
-│   │   ├── index.js           # Barrel export
-│   │   ├── PlayPauseButton.jsx  # Play/pause toggle (sm/md/lg sizes)
-│   │   └── IconButton.jsx     # Generic icon button wrapper
-│   ├── audiobook/             # Audiobook-specific components
-│   │   ├── index.js           # Barrel export
-│   │   ├── AudiobookCover.jsx # Cover image with fallback
-│   │   └── AudiobookInfo.jsx  # Title + author (card/detail/player variants)
-│   ├── Header.jsx             # App title and subtitle
-│   ├── CategoryFilter.jsx     # Category filter buttons
-│   ├── AudiobookGrid.jsx      # Grid of cards by category
-│   ├── AudiobookCard.jsx      # Individual audiobook card
-│   ├── AudiobookDetail.jsx    # Modal with full audiobook info
-│   └── AudioPlayerBar.jsx     # Fixed bottom player
+│   ├── ui/                       # Generic UI components
+│   │   ├── index.js              # Barrel export
+│   │   ├── PlayPauseButton.jsx   # Play/pause toggle (sm/md/lg sizes)
+│   │   └── IconButton.jsx        # Generic icon button wrapper
+│   ├── audiobook/                # Audiobook-specific components
+│   │   ├── index.js              # Barrel export
+│   │   ├── AudiobookCover.jsx    # Cover image with fallback
+│   │   └── AudiobookInfo.jsx     # Title + author (card/detail/player variants)
+│   ├── Header.jsx                # App title and subtitle
+│   ├── CategoryFilter.jsx        # Category filter buttons
+│   ├── AudiobookGrid.jsx         # Grid of cards by category
+│   ├── AudiobookCard.jsx         # Individual audiobook card (Link to detail)
+│   └── AudioPlayerBar.jsx        # Fixed bottom player (persists across routes)
 ├── context/
-│   ├── audioPlayerContext.js  # Context definition
-│   └── AudioPlayerProvider.jsx # Provider with player state
+│   ├── audioPlayerContext.js     # Audio player context definition
+│   ├── AudioPlayerProvider.jsx   # Provider with player state
+│   ├── audiobooksContext.js      # Audiobooks context definition
+│   └── AudiobooksProvider.jsx    # Provider with audiobooks data + lookup map
 ├── hooks/
-│   ├── useAudiobooks.js       # Fetch audiobooks from Supabase
-│   ├── useAudioPlayer.js      # HTML5 audio control (play, pause, seek)
-│   ├── useAudioDuration.js    # Fetch audio duration from MP3 metadata
-│   └── useAudioPlayerContext.js # Hook to consume AudioPlayerContext
+│   ├── useAudiobooks.js          # Fetch audiobooks from Supabase
+│   ├── useAudiobooksContext.js   # Hook to consume AudiobooksContext
+│   ├── useAudioPlayer.js         # HTML5 audio control (play, pause, seek)
+│   ├── useAudioDuration.js       # Fetch audio duration from MP3 metadata
+│   └── useAudioPlayerContext.js  # Hook to consume AudioPlayerContext
 └── lib/
-    └── supabase.js            # Supabase client configuration
+    └── supabase.js               # Supabase client configuration
 ```
 
 ### Component Hierarchy
 
 ```
-App.jsx (wrapped in AudioPlayerProvider)
-├── Header                    # App title and subtitle
-├── CategoryFilter            # Category filter buttons
-├── AudiobookGrid             # Grid of cards by category
-│   └── AudiobookCard         # Uses context for player state
-│       ├── AudiobookCover    # Image with fallback
-│       └── PlayPauseButton   # Play/pause toggle
-├── AudiobookDetail           # Modal with full audiobook info
-│   ├── AudiobookCover        # Image with fallback
-│   └── AudiobookInfo         # Title + author
-└── AudioPlayerBar            # Fixed bottom player (uses context)
-    ├── BookIcon              # Fallback icon
-    ├── AudiobookInfo         # Title + author
-    └── PlayPauseButton       # Play/pause toggle
+BrowserRouter (main.jsx)
+└── App.jsx
+    └── AudiobooksProvider        # Provides audiobooks data to all routes
+        └── AudioPlayerProvider   # Provides player state to all routes
+            ├── Routes
+            │   ├── "/" → HomePage
+            │   │   ├── Header
+            │   │   ├── CategoryFilter
+            │   │   └── AudiobookGrid
+            │   │       └── AudiobookCard (Link to /audiobook/:id)
+            │   │           ├── AudiobookCover
+            │   │           └── PlayPauseButton
+            │   │
+            │   └── "/audiobook/:id" → AudiobookDetailPage
+            │       ├── Back button (navigate(-1))
+            │       ├── AudiobookCover
+            │       ├── AudiobookInfo
+            │       └── Play/Pause button
+            │
+            └── AudioPlayerBar    # Always visible when audio is playing
+                ├── BookIcon
+                ├── AudiobookInfo
+                └── PlayPauseButton
 ```
 
 ### State Management
 
-Audio player state is centralized in `AudioPlayerContext`:
+**AudiobooksContext** - Shared audiobooks data:
+
+| State | Description |
+|-------|-------------|
+| `categories` | Array of categories with nested audiobooks |
+| `audiobooksMap` | Object for O(1) lookup by audiobook ID |
+| `loading` | Boolean loading state |
+| `error` | Error message if fetch failed |
+
+**AudioPlayerContext** - Audio player state:
 
 | State/Action | Description |
 |--------------|-------------|
-| `currentAudiobook` | Currently selected audiobook object |
+| `currentAudiobook` | Currently playing audiobook object |
 | `isPlaying` | Boolean play/pause state |
 | `durationCache` | Object caching audio durations by URL |
 | `playAudiobook(audiobook)` | Start/toggle playback |
@@ -107,7 +145,7 @@ Audio player state is centralized in `AudioPlayerContext`:
 | `closePlayer()` | Stop and hide player |
 | `handleDurationLoaded(src, duration)` | Cache a loaded duration |
 
-Components access this via `useAudioPlayerContext()` hook.
+Components access these via `useAudiobooksContext()` and `useAudioPlayerContext()` hooks.
 
 ## Supabase Backend
 
@@ -127,7 +165,7 @@ Current categories: `filosofia`, `ciencia`, `literatura`, `psicologia`
 **audiobooks**
 | Column | Type | Description |
 |--------|------|-------------|
-| id | TEXT (PK) | Audiobook identifier |
+| id | TEXT (PK) | Audiobook identifier (URL-friendly slug) |
 | title | TEXT | Book title |
 | author | TEXT | Author name |
 | description | TEXT | Book description |
@@ -195,6 +233,7 @@ The `AudioPlayerBar` component includes:
 - Time indicators: elapsed time (left) and remaining time with minus sign (right)
 - Play/pause controls
 - Real-time updates via `useAudioPlayer` hook
+- Persists across route navigation
 
 ## Deployment
 
