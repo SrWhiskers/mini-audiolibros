@@ -1,4 +1,9 @@
+import { filterNonEmptyCategories } from '../lib/categoryUtils';
+
 export default function CategoryFilter({ categories, selectedCategory, onSelectCategory }) {
+  // Solo mostrar categorías con al menos 1 audiolibro
+  const nonEmptyCategories = filterNonEmptyCategories(categories);
+
   return (
     <div className="mb-8">
       <div className="flex flex-wrap gap-2">
@@ -12,7 +17,7 @@ export default function CategoryFilter({ categories, selectedCategory, onSelectC
         >
           Todas
         </button>
-        {categories.map((category) => (
+        {nonEmptyCategories.map((category) => (
           <button
             key={category.id}
             onClick={() => onSelectCategory(category.id)}

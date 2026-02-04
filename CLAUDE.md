@@ -75,7 +75,7 @@ src/
 │   │   ├── AudiobookCover.jsx    # Cover image with fallback
 │   │   └── AudiobookInfo.jsx     # Title + author (card/detail/player variants)
 │   ├── Header.jsx                # App title and subtitle
-│   ├── CategoryFilter.jsx        # Category filter buttons
+│   ├── CategoryFilter.jsx        # Category filter buttons (hides empty categories)
 │   ├── AudiobookGrid.jsx         # Grid of cards by category
 │   ├── AudiobookCard.jsx         # Individual audiobook card (Link to detail)
 │   └── AudioPlayerBar.jsx        # Fixed bottom player (persists across routes)
@@ -91,7 +91,11 @@ src/
 │   ├── useAudioDuration.js       # Fetch audio duration from MP3 metadata
 │   └── useAudioPlayerContext.js  # Hook to consume AudioPlayerContext
 └── lib/
-    └── supabase.js               # Supabase client configuration
+    ├── supabase.js               # Supabase client configuration
+    └── categoryUtils.js          # Category helpers (filtering, families)
+
+supabase/
+└── seed_categories.sql           # SQL seed for 41 categories (run manually)
 ```
 
 ### Component Hierarchy
@@ -156,11 +160,17 @@ Project URL: `https://izzkmsahowfuljybisml.supabase.co`
 **categories**
 | Column | Type | Description |
 |--------|------|-------------|
-| id | TEXT (PK) | Category identifier (e.g., "filosofia") |
+| id | TEXT (PK) | Category identifier with family prefix (e.g., "trad:roma", "tema:etica") |
 | name | TEXT | Display name |
 | created_at | TIMESTAMP | Auto-generated |
 
-Current categories: `filosofia`, `ciencia`, `literatura`, `psicologia`
+Categories are organized in 4 families via ID prefix:
+- `trad:` - Tradición cultural / civilizatoria (10 categories)
+- `tipo:` - Tipo de obra (8 categories)
+- `tema:` - Eje temático fuerte (15 categories)
+- `pract:` - Etiquetas prácticas (8 categories)
+
+The UI only shows categories that have at least 1 audiobook assigned (empty categories are hidden automatically).
 
 **audiobooks**
 | Column | Type | Description |
@@ -213,7 +223,17 @@ Use Supabase Dashboard directly to manage content:
 **Assign audiobook to multiple categories:**
 1. Table Editor > `audiobook_categories`
 2. Insert one row per category: `(audiobook_id, category_id)`
-3. Example: book "mi-libro" in filosofia and ciencia = 2 rows
+3. Example: "meditaciones-marco-aurelio" with categories = 4 rows:
+   - `('meditaciones-marco-aurelio', 'trad:roma')`
+   - `('meditaciones-marco-aurelio', 'tipo:meditacion')`
+   - `('meditaciones-marco-aurelio', 'tema:etica')`
+   - `('meditaciones-marco-aurelio', 'pract:estoicismo')`
+
+**Manage categories (no code changes needed):**
+- **Add category**: Insert in `categories` table (use prefix for organization: `trad:`, `tipo:`, `tema:`, `pract:`)
+- **Remove category**: Delete relations in `audiobook_categories` first, then delete from `categories`
+- **Hide category**: Remove all audiobooks from it (UI hides empty categories automatically)
+- **Seed file**: `supabase/seed_categories.sql` contains all 41 predefined categories
 
 ## Audio Features
 
