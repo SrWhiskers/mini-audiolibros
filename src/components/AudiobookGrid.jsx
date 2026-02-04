@@ -1,6 +1,6 @@
 import AudiobookCard from './AudiobookCard';
 
-export default function AudiobookGrid({ categories, onPlayAudiobook, onSelectAudiobook, currentAudiobookId, isPlaying, durationCache, onDurationLoaded }) {
+export default function AudiobookGrid({ categories, onSelectAudiobook }) {
   return (
     <div className="space-y-10">
       {categories.map((category) => (
@@ -14,12 +14,7 @@ export default function AudiobookGrid({ categories, onPlayAudiobook, onSelectAud
               <AudiobookCard
                 key={audiobook.id}
                 audiobook={audiobook}
-                onPlay={() => onPlayAudiobook(audiobook)}
-                onClick={() => onSelectAudiobook(audiobook)}
-                isActive={currentAudiobookId === audiobook.id}
-                isCurrentlyPlaying={isPlaying}
-                cachedDuration={durationCache[audiobook.audioSrc]}
-                onDurationLoaded={onDurationLoaded}
+                onSelectAudiobook={onSelectAudiobook}
               />
             ))}
           </div>

@@ -56,7 +56,6 @@ export function useAudioPlayer() {
     loadAudio,
     play,
     pause,
-    seek,
     seekPercent,
   };
 }
