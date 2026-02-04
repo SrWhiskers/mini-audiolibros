@@ -33,25 +33,81 @@ Mini Audiolibros is a React + Vite webapp for browsing and playing audiobook sum
 - Tailwind CSS v4 (via @tailwindcss/vite plugin)
 - Supabase (PostgreSQL database + Storage for audio/images)
 
-### Key Files
-
-- `src/App.jsx` - Main component managing global state (selected category, current audiobook, playing state, detail view, duration cache)
-- `src/lib/supabase.js` - Supabase client configuration
-- `src/hooks/useAudiobooks.js` - Hook to fetch audiobooks from Supabase
-- `src/hooks/useAudioPlayer.js` - Custom hook for HTML5 audio control (play, pause, seek, time tracking)
-- `src/hooks/useAudioDuration.js` - Custom hook for fetching real audio duration from MP3 metadata
-
-### Component Structure
+### Project Structure
 
 ```
-App.jsx
+src/
+├── App.jsx                    # Main component (category filter, detail modal)
+├── main.jsx                   # React entry point
+├── index.css                  # Global styles
+├── components/
+│   ├── icons/                 # Reusable SVG icon components
+│   │   ├── index.js           # Barrel export
+│   │   ├── BookIcon.jsx
+│   │   ├── PlayIcon.jsx
+│   │   ├── PauseIcon.jsx
+│   │   ├── CloseIcon.jsx
+│   │   └── ClockIcon.jsx
+│   ├── ui/                    # Generic UI components
+│   │   ├── index.js           # Barrel export
+│   │   ├── PlayPauseButton.jsx  # Play/pause toggle (sm/md/lg sizes)
+│   │   └── IconButton.jsx     # Generic icon button wrapper
+│   ├── audiobook/             # Audiobook-specific components
+│   │   ├── index.js           # Barrel export
+│   │   ├── AudiobookCover.jsx # Cover image with fallback
+│   │   └── AudiobookInfo.jsx  # Title + author (card/detail/player variants)
+│   ├── Header.jsx             # App title and subtitle
+│   ├── CategoryFilter.jsx     # Category filter buttons
+│   ├── AudiobookGrid.jsx      # Grid of cards by category
+│   ├── AudiobookCard.jsx      # Individual audiobook card
+│   ├── AudiobookDetail.jsx    # Modal with full audiobook info
+│   └── AudioPlayerBar.jsx     # Fixed bottom player
+├── context/
+│   ├── audioPlayerContext.js  # Context definition
+│   └── AudioPlayerProvider.jsx # Provider with player state
+├── hooks/
+│   ├── useAudiobooks.js       # Fetch audiobooks from Supabase
+│   ├── useAudioPlayer.js      # HTML5 audio control (play, pause, seek)
+│   ├── useAudioDuration.js    # Fetch audio duration from MP3 metadata
+│   └── useAudioPlayerContext.js # Hook to consume AudioPlayerContext
+└── lib/
+    └── supabase.js            # Supabase client configuration
+```
+
+### Component Hierarchy
+
+```
+App.jsx (wrapped in AudioPlayerProvider)
 ├── Header                    # App title and subtitle
 ├── CategoryFilter            # Category filter buttons
 ├── AudiobookGrid             # Grid of cards by category
-│   └── AudiobookCard         # Individual audiobook card (click: detail, play button: audio)
+│   └── AudiobookCard         # Uses context for player state
+│       ├── AudiobookCover    # Image with fallback
+│       └── PlayPauseButton   # Play/pause toggle
 ├── AudiobookDetail           # Modal with full audiobook info
-└── AudioPlayerBar            # Fixed bottom player (appears when audio is active)
+│   ├── AudiobookCover        # Image with fallback
+│   └── AudiobookInfo         # Title + author
+└── AudioPlayerBar            # Fixed bottom player (uses context)
+    ├── BookIcon              # Fallback icon
+    ├── AudiobookInfo         # Title + author
+    └── PlayPauseButton       # Play/pause toggle
 ```
+
+### State Management
+
+Audio player state is centralized in `AudioPlayerContext`:
+
+| State/Action | Description |
+|--------------|-------------|
+| `currentAudiobook` | Currently selected audiobook object |
+| `isPlaying` | Boolean play/pause state |
+| `durationCache` | Object caching audio durations by URL |
+| `playAudiobook(audiobook)` | Start/toggle playback |
+| `togglePlayPause()` | Toggle current playback |
+| `closePlayer()` | Stop and hide player |
+| `handleDurationLoaded(src, duration)` | Cache a loaded duration |
+
+Components access this via `useAudioPlayerContext()` hook.
 
 ## Supabase Backend
 
@@ -128,7 +184,7 @@ Use Supabase Dashboard directly to manage content:
 The app fetches real audio duration from MP3 files:
 
 1. **useAudioDuration hook** - Creates an `Audio()` element with `preload='metadata'` to fetch only file metadata
-2. **Duration cache** - App.jsx maintains a `durationCache` object keyed by `audioSrc` to avoid repeated requests
+2. **Duration cache** - `AudioPlayerContext` maintains a `durationCache` object keyed by `audioSrc` to avoid repeated requests
 3. **Fallback** - If audio file fails to load, displays the duration from database
 4. **Loading state** - Shows pulse animation while fetching metadata
 
